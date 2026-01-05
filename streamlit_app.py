@@ -1,10 +1,10 @@
-# Import python packages
+# -------------------- Imports --------------------
 import streamlit as st
-import requests
-from snowflake.snowpark.functions import col
 import snowflake.connector
 import pandas as pd
+import requests
 
+# -------------------- Snowflake Connection --------------------
 cnx = snowflake.connector.connect(
     user=st.secrets["snowflake"]["user"],
     password=st.secrets["snowflake"]["password"],
@@ -15,67 +15,61 @@ cnx = snowflake.connector.connect(
 )
 
 session = cnx.cursor()
+
+# -------------------- Load Fruit Options --------------------
 query = "SELECT FRUIT_NAME FROM SMOOTHIES.PUBLIC.FRUIT_OPTIONS"
 my_dataframe = pd.read_sql(query, cnx)
 
-# Write directly to the app
+# -------------------- App UI --------------------
 st.title("🥤 Customize Your Smoothie! 🥤")
-name_on_order = st.text_input('Name on Smoothie:')
-st.write('The name on your Smoothie will be:', name_on_order)
+
+name_on_order = st.text_input("Name on Smoothie:")
+st.write("The name on your Smoothie will be:", name_on_order)
 
 st.write("Choose the fruits you want in your custom Smoothie!")
 
-
-
 ingredients_list = st.multiselect(
-    'Choose up to 5 ingredients:',
+    "Choose up to 5 ingredients:",
     my_dataframe["FRUIT_NAME"].tolist(),
     max_selections=5
 )
 
+# -------------------- Initialize Variable --------------------
+ingredients_string = ""
+
+# -------------------- Nutrition Info --------------------
 if ingredients_list:
-    ingredients_string = ''
-
     for fruit_chosen in ingredients_list:
-        ingredients_string += fruit_chosen + ' '
+        ingredients_string += fruit_chosen + " "
 
-        st.subheader(fruit_chosen + " Nutrition Information")
+        st.subheader(f"{fruit_chosen} Nutrition Information")
 
-        smoothiefruit_response = requests.get(
+        response = requests.get(
             f"https://my.smoothiefroot.com/api/fruit/{fruit_chosen.lower()}"
         )
 
-        st.dataframe(
-            data=smoothiefruit_response.json(),
-            use_container_width=True
-        )
+        if response.status_code == 200:
+            st.dataframe(response.json(), use_container_width=True)
+        else:
+            st.warning(f"Sorry, {fruit_chosen} is not in the SmoothieFroot database.")
 
+    st.write("### Your Smoothie Ingredients:")
     st.write(ingredients_string)
 
-
-
-my_insert_stmt = """ insert into smoothies.public.orders
-(ingredients, name_on_order)
-values ('""" + ingredients_string + """','""" + name_on_order + """')"""
-
-# st.write(my_insert_stmt)   
-
-time_to_insert = st.button('Submit Order')
+# -------------------- Submit Order --------------------
+time_to_insert = st.button("Submit Order")
 
 if time_to_insert:
-    session.execute(my_insert_stmt)
-    cnx.commit()
-    st.success('Your Smoothie is ordered, ' + name_on_order + '!', icon='✅')
-
-
-smoothiefroot_response = requests.get(
-    "https://my.smoothiefroot.com/api/fruit/watermelon"
-)
-
-st.dataframe(
-    smoothiefroot_response.json(),
-    use_container_width=True
-)
+    if not name_on_order or not ingredients_string:
+        st.error("Please enter your name and select at least one ingredient.")
+    else:
+        my_insert_stmt = f"""
+            INSERT INTO smoothies.public.orders (ingredients, name_on_order)
+            VALUES ('{ingredients_string}', '{name_on_order}')
+        """
+        session.execute(my_insert_stmt)
+        cnx.commit()
+        st.success(f"Your Smoothie is ordered, {name_on_order}! ✅")
 
 
 
