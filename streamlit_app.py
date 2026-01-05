@@ -17,7 +17,10 @@ cnx = snowflake.connector.connect(
 session = cnx.cursor()
 
 # -------------------- Load Fruit Options --------------------
-query = "SELECT FRUIT_NAME FROM SMOOTHIES.PUBLIC.FRUIT_OPTIONS"
+query = """
+SELECT FRUIT_NAME, SEARCH_ON
+FROM SMOOTHIES.PUBLIC.FRUIT_OPTIONS
+"""
 my_dataframe = pd.read_sql(query, cnx)
 
 # -------------------- App UI --------------------
@@ -30,7 +33,7 @@ st.write("Choose the fruits you want in your custom Smoothie!")
 
 ingredients_list = st.multiselect(
     "Choose up to 5 ingredients:",
-    my_dataframe["FRUIT_NAME"].tolist(),
+    options=my_dataframe["FRUIT_NAME"].tolist(),
     max_selections=5
 )
 
@@ -42,16 +45,24 @@ if ingredients_list:
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + " "
 
+        # ✅ STEP 6: Map display name → API search value
+        search_value = my_dataframe.loc[
+            my_dataframe["FRUIT_NAME"] == fruit_chosen,
+            "SEARCH_ON"
+        ].values[0]
+
         st.subheader(f"{fruit_chosen} Nutrition Information")
 
         response = requests.get(
-            f"https://my.smoothiefroot.com/api/fruit/{fruit_chosen.lower()}"
+            f"https://my.smoothiefroot.com/api/fruit/{search_value}"
         )
 
         if response.status_code == 200:
             st.dataframe(response.json(), use_container_width=True)
         else:
-            st.warning(f"Sorry, {fruit_chosen} is not in the SmoothieFroot database.")
+            st.warning(
+                f"Sorry, {fruit_chosen} is not in the SmoothieFroot database."
+            )
 
     st.write("### Your Smoothie Ingredients:")
     st.write(ingredients_string)
