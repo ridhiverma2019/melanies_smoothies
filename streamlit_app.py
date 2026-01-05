@@ -1,5 +1,6 @@
 # Import python packages
 import streamlit as st
+import requests
 from snowflake.snowpark.functions import col
 import snowflake.connector
 import pandas as pd
@@ -54,4 +55,10 @@ if time_to_insert:
     cnx.commit()
     st.success('Your Smoothie is ordered, ' + name_on_order + '!', icon='✅')
 
+# New section to display SmoothieRoot nutrition information
+smoothiefroot_response = requests.get(
+    "https://my.smoothiefroot.com/api/fruit/watermelon"
+)
+
+st.text(smoothiefroot_response)
 
