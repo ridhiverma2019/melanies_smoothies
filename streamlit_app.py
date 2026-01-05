@@ -40,7 +40,7 @@ if ingredients_list:
         ingredients_string += fruit_chosen + ' '
 
         smoothiefruit_response = requests.get(
-            f"https://my.smoothiefruit.com/api/fruit/{fruit_chosen.lower()}",
+            f"https://my.smoothiefrooit.com/api/fruit/{fruit_chosen.lower()}",
             verify=False
         )
 
