@@ -1,10 +1,19 @@
 # Import python packages
 import streamlit as st
-from snowflake.snowpark.context import get_active_session
 from snowflake.snowpark.functions import col
+import snowflake.connector
 
-# Get the Snowflake session
-session = get_active_session()
+cnx = snowflake.connector.connect(
+    user=st.secrets["snowflake"]["user"],
+    password=st.secrets["snowflake"]["password"],
+    account=st.secrets["snowflake"]["account"],
+    warehouse=st.secrets["snowflake"]["warehouse"],
+    database=st.secrets["snowflake"]["database"],
+    schema=st.secrets["snowflake"]["schema"]
+)
+
+session = cnx.cursor()
+
 
 # Write directly to the app
 st.title("🥤 Customize Your Smoothie! 🥤")
