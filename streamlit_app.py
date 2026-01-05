@@ -38,34 +38,34 @@ ingredients_list = st.multiselect(
 )
 
 # -------------------- Initialize Variable --------------------
-ingredients_string = ""
-
-# -------------------- Nutrition Info --------------------
 if ingredients_list:
+    ingredients_string = ""
+
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + " "
 
-        # ✅ STEP 6: Map display name → API search value
-        search_value = my_dataframe.loc[
-            my_dataframe["FRUIT_NAME"] == fruit_chosen,
+        search_on = pd_df.loc[
+            pd_df["FRUIT_NAME"] == fruit_chosen,
             "SEARCH_ON"
-        ].values[0]
+        ].iloc[0]
 
         st.subheader(f"{fruit_chosen} Nutrition Information")
 
-        response = requests.get(
-            f"https://my.smoothiefroot.com/api/fruit/{search_value}"
+        smoothiefruit_response = requests.get(
+            f"https://my.smoothiefroot.com/api/fruit/{search_on.lower()}"
         )
 
-        if response.status_code == 200:
-            st.dataframe(response.json(), use_container_width=True)
-        else:
-            st.warning(
-                f"Sorry, {fruit_chosen} is not in the SmoothieFroot database."
+        if smoothiefruit_response.status_code == 200:
+            st.dataframe(
+                smoothiefruit_response.json(),
+                use_container_width=True
             )
+        else:
+            st.warning(f"Sorry, {fruit_chosen} is not in the SmoothieFroot database.")
 
     st.write("### Your Smoothie Ingredients:")
     st.write(ingredients_string)
+
 
 # -------------------- Submit Order --------------------
 time_to_insert = st.button("Submit Order")
