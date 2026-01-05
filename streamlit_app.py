@@ -25,7 +25,7 @@ st.write('The name on your Smoothie will be:', name_on_order)
 
 st.write("Choose the fruits you want in your custom Smoothie!")
 
-# Read fruit options table
+
 
 ingredients_list = st.multiselect(
     'Choose up to 5 ingredients:',
@@ -33,20 +33,29 @@ ingredients_list = st.multiselect(
     max_selections=5
 )
 
-
 ingredients_string = ''
 
 if ingredients_list:
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + ' '
 
+        smoothiefruit_response = requests.get(
+            f"https://my.smoothiefruit.com/api/fruit/{fruit_chosen.lower()}"
+        )
+
+        sf_df = st.dataframe(
+            data=smoothiefruit_response.json(),
+            use_container_width=True
+        )
+
     st.write(ingredients_string)
+
 
 my_insert_stmt = """ insert into smoothies.public.orders
 (ingredients, name_on_order)
 values ('""" + ingredients_string + """','""" + name_on_order + """')"""
 
-# st.write(my_insert_stmt)   # optional for debugging
+# st.write(my_insert_stmt)   
 
 time_to_insert = st.button('Submit Order')
 
@@ -55,7 +64,7 @@ if time_to_insert:
     cnx.commit()
     st.success('Your Smoothie is ordered, ' + name_on_order + '!', icon='✅')
 
-# New section to display SmoothieRoot nutrition information
+
 smoothiefroot_response = requests.get(
     "https://my.smoothiefroot.com/api/fruit/watermelon"
 )
